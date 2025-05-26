@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI in Nursing Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .quiz-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: auto;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .question h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .options label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #fff;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .options label:hover {
+            background-color: #e9f5ff;
+            border-color: #007bff;
+        }
+        .options input[type="radio"] {
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .options label.selected {
+            background-color: #d0eaff;
+            border-color: #0056b3;
+        }
+
+        .options input[type="radio"]:checked {
+            accent-color: #007bff;
+        }
+
+        .submit-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+        .score-container {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 20px;
+            display: none;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: none;
+        }
+        .highlight-error {
+            border: 1px solid red;
+        }
+        .options label.correct {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+        .options label.incorrect {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+        .question-note {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+        .supplication {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #555;
+            padding: 15px;
+            border: 1px dashed #ccc;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+        .developer-note {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 1.0em;
+            font-weight: bold;
+            color: #0B13A2;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h2>AI in Nursing Quiz</h2>
+        <form id="quizForm">
+        </form>
+
+        <div id="scoreContainer" class="score-container">
+            <h3>Your Score: <span id="score">0</span> / <span id="totalQuestions">0</span></h3>
+        </div>
+    </div>
+
+    <script>
+        const quizForm = document.getElementById('quizForm');
+        const scoreContainer = document.getElementById('scoreContainer');
+        const scoreSpan = document.getElementById('score');
+        const totalQuestionsSpan = document.getElementById('totalQuestions');
+
+        let correctAnswersMap = {}; // Stores questionId -> correctAnswerText
+        let allQuestionsData = []; // Combined array of all questions in order
+
+        // Define MCQ questions
+        const mcqQuestions = [
+            {
+                question: 'How can AI enhance decision-making for nurses?',
+                options: [
+                    'By replacing human judgment',
+                    'By providing clinical decision support based on real-time data',
+                    'By automating all nursing tasks',
+                    'By eliminating the need for patient interaction'
+                ],
+                correctAnswer: 'By providing clinical decision support based on real-time data'
+            },
+            {
+                question: 'What is a primary benefit of AI in nursing regarding patient interaction?',
+                options: [
+                    'Decreased patient satisfaction',
+                    'Increased time spent on administrative tasks',
+                    'More time for direct patient care',
+                    'Reduced need for training'
+                ],
+                correctAnswer: 'More time for direct patient care'
+            },
+            {
+                question: 'Which challenge may nurses face when implementing AI in their practice?',
+                options: [
+                    'Enhanced communication with patients',
+                    'Resistance to change from some staff',
+                    'Increased administrative tasks',
+                    'Simplified documentation processes'
+                ],
+                correctAnswer: 'Resistance to change from some staff'
+            },
+            {
+                question: 'What is a significant ethical concern associated with AI in nursing?',
+                options: [
+                    'Increased efficiency in patient care',
+                    'Potential bias in AI algorithms',
+                    'Enhanced data sharing',
+                    'Improved patient monitoring'
+                ],
+                correctAnswer: 'Potential bias in AI algorithms'
+            },
+            {
+                question: 'How can nurses ensure the ethical use of AI tools in patient care?',
+                options: [
+                    'By disregarding guidelines',
+                    'By involving healthcare professionals in the development of AI tools',
+                    'By keeping AI processes secret',
+                    'By minimizing patient engagement'
+                ],
+                correctAnswer: 'By involving healthcare professionals in the development of AI tools'
+            },
+            {
+                question: 'Which of the following is a role that nurses might expand into due to AI?',
+                options: [
+                    'Data entry clerk',
+                    'Health coach',
+                    'Laboratory technician',
+                    'Administrative assistant'
+                ],
+                correctAnswer: 'Health coach'
+            },
+            {
+                question: 'What is a potential consequence of not integrating AI tools with existing systems?',
+                options: [
+                    'Improved patient outcomes',
+                    'Increased workflow efficiency',
+                    'Adoption challenges and workflow disruptions',
+                    'Enhanced nurse training'
+                ],
+                correctAnswer: 'Adoption challenges and workflow disruptions'
+            },
+            {
+                question: 'What kind of training will nurses need to effectively utilize AI tools?',
+                options: [
+                    'Training on administrative tasks only',
+                    'Comprehensive training on technology and critical analysis',
+                    'No training is required',
+                    'Training on how to ignore AI recommendations'
+                ],
+                correctAnswer: 'Comprehensive training on technology and critical analysis'
+            },
+            {
+                question: 'Why is transparency important in the use of AI in nursing?',
+                options: [
+                    'It complicates decision-making',
+                    'It allows patients and nurses to understand AI processes and recommendations',
+                    'It creates more work for nurses',
+                    'It reduces patient trust'
+                ],
+                correctAnswer: 'It allows patients and nurses to understand AI processes and recommendations'
+            },
+            {
+                question: 'What does predictive analytics in nursing help identify?',
+                options: [
+                    'Staffing needs',
+                    'Patient preferences',
+                    'Patients at risk of deterioration',
+                    'General trends in healthcare'
+                ],
+                correctAnswer: 'Patients at risk of deterioration'
+            },
+            {
+                question: 'What is a key performance indicator (KPI) in the context of AI in nursing?',
+                options: [
+                    'A financial budget',
+                    'A metric to evaluate AI effectiveness',
+                    'A type of patient assessment',
+                    'A nursing skill certification'
+                ],
+                correctAnswer: 'A metric to evaluate AI effectiveness'
+            },
+            {
+                question: 'Which of the following best describes diagnostic accuracy?',
+                options: [
+                    'The speed of patient care',
+                    'The percentage of correct AI diagnoses',
+                    'The cost of AI tools',
+                    'The number of patients seen'
+                ],
+                correctAnswer: 'The percentage of correct AI diagnoses'
+            },
+            {
+                question: 'Predictive accuracy in AI tools refers to:',
+                options: [
+                    'How fast a tool operates',
+                    'The ability to foresee patient outcomes',
+                    'The design of the AI interface',
+                    'The number of patients treated'
+                ],
+                correctAnswer: 'The ability to foresee patient outcomes'
+            },
+            {
+                question: 'AI applications can save time by:',
+                options: [
+                    'Replacing nurses completely',
+                    'Reducing time spent on administrative tasks',
+                    'Increasing patient load',
+                    'Eliminating patient assessments'
+                ],
+                correctAnswer: 'Reducing time spent on administrative tasks'
+            },
+            {
+                question: 'What is one way AI improves patient outcomes?',
+                options: [
+                    'By increasing paperwork',
+                    'By predicting complications',
+                    'By reducing staff involvement',
+                    'By limiting patient interactions'
+                ],
+                correctAnswer: 'By predicting complications'
+            },
+            {
+                question: 'Cost-effectiveness in AI is measured by:',
+                options: [
+                    'The complexity of the AI tool',
+                    'Financial savings versus implementation costs',
+                    'The number of features available',
+                    'The speed of the software'
+                ],
+                correctAnswer: 'Financial savings versus implementation costs'
+            },
+            {
+                question: 'User adoption rates refer to:',
+                options: [
+                    'The number of patients using AI tools',
+                    'The percentage of staff using AI applications',
+                    'The frequency of AI updates',
+                    'The budget allocated for AI'
+                ],
+                correctAnswer: 'The percentage of staff using AI applications'
+            },
+            {
+                question: 'Which factor is critical for ensuring ease of use of AI tools?',
+                options: [
+                    'The number of features available',
+                    'The complexity of the technology',
+                    'An intuitive user interface',
+                    'The brand of the software'
+                ],
+                correctAnswer: 'An intuitive user interface'
+            },
+            {
+                question: 'AI supports adherence to clinical guidelines by:',
+                options: [
+                    'Eliminating the need for protocols',
+                    'Providing reminders and alerts',
+                    'Increasing paperwork',
+                    'Reducing nurse-patient interactions'
+                ],
+                correctAnswer: 'Providing reminders and alerts'
+            },
+            {
+                question: 'Personalization of care through AI allows for:',
+                options: [
+                    'Standardized treatment plans for all patients',
+                    'Tailoring interventions based on individual patient data',
+                    'Less interaction with patients',
+                    'More time spent on administrative tasks'
+                ],
+                correctAnswer: 'Tailoring interventions based on individual patient data'
+            },
+            {
+                question: 'Effective staff training on AI tools is important for:',
+                options: [
+                    'Reducing the need for nurses',
+                    'Ensuring nurses can use the technology competently',
+                    'Increasing administrative work',
+                    'Simplifying patient care protocols'
+                ],
+                correctAnswer: 'Ensuring nurses can use the technology competently'
+            },
+            {
+                question: 'What is a major ethical concern regarding AI in nursing?',
+                options: [
+                    'The speed of implementation',
+                    'Data privacy and security',
+                    'The color of the interface',
+                    'The type of devices used'
+                ],
+                correctAnswer: 'Data privacy and security'
+            },
+            {
+                question: 'AI\'s impact on health disparities focuses on:',
+                options: [
+                    'Reducing the number of healthcare providers',
+                    'Ensuring equitable access to AI-driven solutions',
+                    'Increasing administrative overhead',
+                    'Standardizing patient treatment'
+                ],
+                correctAnswer: 'Ensuring equitable access to AI-driven solutions'
+            },
+            {
+                question: 'The innovation rate in AI for nursing is measured by:',
+                options: [
+                    'The number of new patients treated',
+                    'The number of new AI applications developed',
+                    'The speed of existing tools',
+                    'The cost of implementation'
+                ],
+                correctAnswer: 'The number of new AI applications developed'
+            },
+            {
+                question: 'Feedback mechanisms for AI tools help:',
+                options: [
+                    'Increase the complexity of systems',
+                    'Collect insights for continuous improvement',
+                    'Standardize all nursing procedures',
+                    'Limit the use of technology in care'
+                ],
+                correctAnswer: 'Collect insights for continuous improvement'
+            },
+            {
+                question: 'Which of the following is an example of AI improving workflow efficiency?',
+                options: [
+                    'AI systems that increase documentation time',
+                    'AI chatbots that manage patient inquiries',
+                    'More in-person meetings for nurses',
+                    'Increased manual data entry'
+                ],
+                correctAnswer: 'AI chatbots that manage patient inquiries'
+            },
+            {
+                question: 'An important aspect of patient satisfaction with AI is:',
+                options: [
+                    'The complexity of the AI system',
+                    'The effectiveness of AI-supported interactions',
+                    'The brand of the AI technology',
+                    'The number of features available'
+                ],
+                correctAnswer: 'The effectiveness of AI-supported interactions'
+            },
+            {
+                question: 'Continuous learning opportunities in AI are important for:',
+                options: [
+                    'Ensuring nurses remain stagnant in their roles',
+                    'Keeping nursing staff updated on new technologies',
+                    'Reducing training costs',
+                    'Eliminating the need for ongoing education'
+                ],
+                correctAnswer: 'Keeping nursing staff updated on new technologies'
+            },
+            {
+                question: 'Which of the following is a key area to assess for AI effectiveness?',
+                options: [
+                    'Number of patients seen',
+                    'Compliance with regulatory standards',
+                    'Complexity of the software used',
+                    'Personal preferences of nurses'
+                ],
+                correctAnswer: 'Compliance with regulatory standards'
+            },
+            {
+                question: 'AI can help improve the quality of care by:',
+                options: [
+                    'Reducing the need for evidence-based practices',
+                    'Providing data-driven insights for better decision-making',
+                    'Limiting the scope of nursing interventions',
+                    'Increasing the burden of paperwork'
+                ],
+                correctAnswer: 'Providing data-driven insights for better decision-making'
+            },
+            {
+                question: 'What is deep learning primarily based on?',
+                options: [
+                    'Decision Trees',
+                    'Neural Networks',
+                    'Support Vector Machines',
+                    'Linear Regression'
+                ],
+                correctAnswer: 'Neural Networks'
+            },
+            {
+                question: 'Which of the following is a key characteristic of deep learning models?',
+                options: [
+                    'They require less data.',
+                    'They consist of multiple layers.',
+                    'They are faster than traditional machine learning models.',
+                    'They do not require training.'
+                ],
+                correctAnswer: 'They consist of multiple layers.'
+            },
+            {
+                question: 'What type of neural network is best suited for image recognition tasks?',
+                options: [
+                    'Recurrent Neural Networks (RNN)',
+                    'Convolutional Neural Networks (CNN)',
+                    'Generative Adversarial Networks (GAN)',
+                    'Radial Basis Function Networks'
+                ],
+                correctAnswer: 'Convolutional Neural Networks (CNN)'
+            },
+            {
+                question: 'In the context of neural networks, what does the term "backpropagation" refer to?',
+                options: [
+                    'A method for generating new data.',
+                    'A technique for initializing weights.',
+                    'An algorithm for updating weights based on error.',
+                    'A way to reduce the complexity of the model.'
+                ],
+                correctAnswer: 'An algorithm for updating weights based on error.'
+            },
+            {
+                question: 'Which of the following frameworks is commonly used for building deep learning models?',
+                options: [
+                    'TensorFlow',
+                    'NumPy',
+                    'Matplotlib',
+                    'Scikit-learn'
+                ],
+                correctAnswer: 'TensorFlow'
+            },
+            {
+                question: 'What is an epoch in the context of training neural networks?',
+                options: [
+                    'A single update of weights.',
+                    'One complete pass through the entire training dataset.',
+                    'A random initialization of weights.',
+                    'A method of regularization.'
+                ],
+                correctAnswer: 'One complete pass through the entire training dataset.'
+            },
+            {
+                question: 'Which activation function is commonly used in hidden layers of neural networks?',
+                options: [
+                    'Sigmoid',
+                    'ReLU (Rectified Linear Unit)',
+                    'Linear',
+                    'Softmax'
+                ],
+                correctAnswer: 'ReLU (Rectified Linear Unit)'
+            },
+            {
+                question: 'What does "overfitting" mean in machine learning?',
+                options: [
+                    'The model performs well on training data but poorly on unseen data.',
+                    'The model is too simple to capture the underlying patterns.',
+                    'The model runs out of memory during training.',
+                    'The model cannot converge.'
+                ],
+                correctAnswer: 'The model performs well on training data but poorly on unseen data.'
+            },
+            {
+                question: 'Which of the following techniques is used to prevent overfitting?',
+                options: [
+                    'Increasing the learning rate',
+                    'Using a smaller dataset',
+                    'Early stopping',
+                    'Reducing the number of layers'
+                ],
+                correctAnswer: 'Early stopping'
+            },
+            {
+                question: 'What is the purpose of the dropout technique in neural networks?',
+                options: [
+                    'To increase training speed',
+                    'To reduce the amount of data needed',
+                    'To randomly deactivate neurons during training to prevent overfitting',
+                    'To enhance feature extraction capabilities'
+                ],
+                correctAnswer: 'To randomly deactivate neurons during training to prevent overfitting'
+            },
+            {
+                question: 'Which subfield of AI involves extracting insights from images and videos?',
+                options: [
+                    'Natural Language Processing',
+                    'Robotics',
+                    'Machine Learning',
+                    'Computer Vision'
+                ],
+                correctAnswer: 'Computer Vision'
+            },
+            {
+                question: 'What role does AI play in healthcare diagnostics?',
+                options: [
+                    'Replacing doctors in diagnosis',
+                    'Improving the accuracy and speed of diagnoses',
+                    'Focusing solely on medical research',
+                    'Replacing all manual tasks in hospitals'
+                ],
+                correctAnswer: 'Improving the accuracy and speed of diagnoses'
+            },
+            {
+                question: 'What is the key objective of AI in healthcare related to administrative tasks?',
+                options: [
+                    'Improve patient engagement',
+                    'Automate routine tasks and optimize resource allocation',
+                    'Develop new healthcare products',
+                    'Replace human healthcare staff'
+                ],
+                correctAnswer: 'Automate routine tasks and optimize resource allocation'
+            },
+            {
+                question: 'What is the current status of General AI (Strong AI)?',
+                options: [
+                    'It is fully implemented in healthcare',
+                    'It has been achieved and is in use today',
+                    'It is still theoretical and not yet achieved',
+                    'It only works in specific applications'
+                ],
+                correctAnswer: 'It is still theoretical and not yet achieved'
+            }
+        ];
+
+        // Define True/False questions
+        const tfQuestions = [
+            {
+                question: 'AI can help nurses identify patients at risk of deterioration.',
+                options: ['True', 'False'],
+                correctAnswer: 'True'
+            },
+            {
+                question: 'Nurses do not need any training to use AI tools effectively.',
+                options: ['True', 'False'],
+                correctAnswer: 'False'
+            },
+            {
+                question: 'Transparency in AI processes is important for building trust with patients.',
+                options: ['True', 'False'],
+                correctAnswer: 'True'
+            },
+            {
+                question: 'The integration of AI tools with existing systems always improves workflow efficiency.',
+                options: ['True', 'False'],
+                correctAnswer: 'False'
+            },
+            {
+                question: 'One potential role nurses might expand into due to AI is that of a health coach.',
+                options: ['True', 'False'],
+                correctAnswer: 'True'
+            },
+            {
+                question: 'General AI (Strong AI) is currently fully implemented and used in healthcare applications.',
+                options: ['True', 'False'],
+                correctAnswer: 'False'
+            },
+            {
+                question: 'Convolutional Neural Networks (CNNs) are the most effective for tasks involving sequential data, such as time series analysis.',
+                options: ['True', 'False'],
+                correctAnswer: 'False'
+            },
+            {
+                question: 'Dropout is a technique used in neural networks to increase the model\'s complexity by randomly adding more neurons during training.',
+                options: ['True', 'False'],
+                correctAnswer: 'False'
+            },
+            {
+                question: 'In reinforcement learning, an agent learns by observing data labeled with correct actions.',
+                options: ['True', 'False'],
+                correctAnswer: 'False'
+            },
+            {
+                question: 'AI systems that mimic expert-level decision-making are known as Expert Systems.',
+                options: ['True', 'False'],
+                correctAnswer: 'True'
+            },
+            {
+                question: 'Backpropagation is a technique used to reduce the complexity of a neural network by simplifying the number of parameters.',
+                options: ['True', 'False'],
+                correctAnswer: 'False'
+            }
+        ];
+
+        // Combine all questions in the desired order
+        allQuestionsData = mcqQuestions.concat(tfQuestions);
+
+        // Function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Function to render the quiz questions dynamically
+        function renderQuiz() {
+            quizForm.innerHTML = ''; // Clear existing questions
+            correctAnswersMap = {}; // Reset correct answers map
+
+            let currentDisplayNumber = 1;
+
+            allQuestionsData.forEach(qData => { // Use allQuestionsData which is already ordered
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                const questionId = `q${currentDisplayNumber}`; // Assign new ID based on position
+                questionDiv.id = questionId;
+
+                const questionText = document.createElement('h3');
+                questionText.textContent = `${currentDisplayNumber}. ${qData.question}`; // Add dynamic numbering
+                questionDiv.appendChild(questionText);
+
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'options';
+
+                // Shuffle options for MCQ questions only
+                const optionsToRender = [...qData.options];
+                // Only shuffle if there are more than 2 options (i.e., it's an MCQ, not True/False)
+                if (optionsToRender.length > 2) {
+                    shuffleArray(optionsToRender);
+                }
+
+                optionsToRender.forEach((optionText, index) => {
+                    const label = document.createElement('label');
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = questionId; // Use the dynamic question ID
+                    input.value = optionText; // Store the actual option text as the value
+
+                    const span = document.createElement('span');
+                    span.textContent = optionText;
+
+                    // Add event listener for selection feedback and error message hiding
+                    input.addEventListener('change', function() {
+                        this.closest('.options').querySelectorAll('label').forEach(lbl => {
+                            lbl.classList.remove('selected');
+                        });
+                        this.closest('label').classList.add('selected');
+                        this.closest('.question').classList.remove('highlight-error');
+                        this.closest('.question').querySelector('.error-message').style.display = 'none';
+                    });
+
+                    label.appendChild(input);
+                    label.appendChild(span);
+                    optionsDiv.appendChild(label);
+                });
+
+                questionDiv.appendChild(optionsDiv);
+
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message';
+                errorMessage.textContent = 'Please select an option for this question.';
+                questionDiv.appendChild(errorMessage);
+
+                quizForm.appendChild(questionDiv);
+
+                // Populate correctAnswersMap for submission logic
+                correctAnswersMap[questionId] = qData.correctAnswer;
+
+                currentDisplayNumber++;
+            });
+
+            // Add the supplication before the submit button
+            const supplicationDiv = document.createElement('div');
+            supplicationDiv.className = 'supplication';
+            supplicationDiv.textContent = 'اللهم إني استودعك ما قرأت وما حفظت وما تعلمت، فرده لي عند حاجتي إليه';
+            quizForm.appendChild(supplicationDiv);
+
+            // Add the developer note
+            const developerNoteDiv = document.createElement('div');
+            developerNoteDiv.className = 'developer-note';
+            developerNoteDiv.textContent = 'تم إعداده وتنفيذه بواسطة عبدو بكر';
+            quizForm.appendChild(developerNoteDiv);
+
+            const submitButton = document.createElement('button');
+            submitButton.type = 'submit';
+            submitButton.className = 'submit-btn';
+            submitButton.textContent = 'Submit Quiz';
+            quizForm.appendChild(submitButton);
+        }
+
+        // Render the quiz when the page loads
+        document.addEventListener('DOMContentLoaded', renderQuiz);
+
+
+        // --- Quiz Submission Logic ---
+        quizForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            let score = 0;
+            let firstUnansweredQuestion = null;
+            const questionElements = document.querySelectorAll('.question');
+
+
+            // Reset previous feedback and errors
+            questionElements.forEach(questionDiv => {
+                questionDiv.classList.remove('highlight-error');
+                questionDiv.querySelector('.error-message').style.display = 'none';
+                questionDiv.querySelectorAll('label').forEach(label => {
+                    label.classList.remove('correct', 'incorrect', 'selected');
+                });
+            });
+
+            // Check answers and validate based on the displayed order
+            for (let i = 0; i < allQuestionsData.length; i++) {
+                const qId = `q${i + 1}`; // Get the dynamic ID based on its position
+                const selectedOption = document.querySelector(`input[name="${qId}"]:checked`);
+                const questionDiv = document.getElementById(qId);
+
+                if (!selectedOption) {
+                    if (!firstUnansweredQuestion) {
+                        firstUnansweredQuestion = questionDiv; // Store the first unanswered question
+                    }
+                    questionDiv.classList.add('highlight-error');
+                    questionDiv.querySelector('.error-message').style.display = 'block';
+                } else {
+                    const userAnswer = selectedOption.value;
+                    const correctAnswer = correctAnswersMap[qId]; // Get correct answer from the map
+
+                    const label = selectedOption.closest('label');
+
+                    if (userAnswer === correctAnswer) {
+                        score++;
+                        label.classList.add('correct');
+                    } else {
+                        label.classList.add('incorrect');
+                        // Find and highlight the correct answer using its exact text value
+                        const correctLabel = Array.from(questionDiv.querySelectorAll('.options label')).find(lbl =>
+                            lbl.querySelector('input').value === correctAnswer
+                        );
+                        if (correctLabel) {
+                            correctLabel.classList.add('correct');
+                        }
+                    }
+                }
+            }
+
+
+            if (firstUnansweredQuestion) {
+                // If there's an unanswered question, scroll to it
+                firstUnansweredQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return; // Stop execution here, don't show score yet
+            }
+
+            // Display score (only if all questions are answered)
+            totalQuestionsSpan.textContent = allQuestionsData.length; // Use total count of all questions
+            scoreSpan.textContent = score;
+            scoreContainer.style.display = 'block';
+
+            // Scroll to top of score
+            scoreContainer.scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
